@@ -5,9 +5,10 @@ import TableList from './components/TableList';
 
 function App() {
   const [isOpen, setIsOpen] = useState(false);
-  const [modalMode, setmodalMode] = useState('add');
+  const [modalMode, setModalMode] = useState('add');
 
   const handleOpen = (mode) => {
+    setModalMode(mode);
     setIsOpen(true);
   }
 
@@ -17,16 +18,20 @@ function App() {
     }else{
       console.log('modal mode Edit');  
     }
-  }
+    setIsOpen(false);
+  };
 
   return (
     <>
-      <NavBar onOpen={() => handleOpen('add') } />
-      <TableList />
-      <ModalForm 
-        isOpen={isOpen}
-        onSubmit={handleSubmit} 
-        onClose={() => setIsOpen(false)}/>
+      <div className="py-5 px-5">
+        <NavBar onOpen={() => handleOpen('add') } />
+        <TableList onOpen={() => handleOpen('edit')}/>
+        <ModalForm 
+          isOpen={isOpen}
+          onClose={() => setIsOpen(false)}
+          mode={modalMode}
+          onSubmit={handleSubmit} />
+      </div>
     </>
   )
 }
