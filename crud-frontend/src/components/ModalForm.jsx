@@ -1,11 +1,43 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-export default function ModalForm({ isOpen, onClose, mode, OnSubmit }) {
+export default function ModalForm({ isOpen, onClose, mode, onSubmit, clientData }) {
     const [rate, setRate] = useState('');
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [job, setJob] = useState('');
-    const [status, setStatus] = useState('');
+    const [status, setStatus] = useState(false);
+
+    const handleStatusChange = (e) => {
+        setStatus(e.target.value === 'Active');
+    }
+    
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        try{
+            const clientData = {name, email, status, job, rate: Number(rate), isactive: status}
+            await onSubmit(clientData);
+            onClose(); 
+        } catch (err){
+            console.error("Error adding client", err);
+        }
+        onClose();
+    }
+
+    useEffect(() => {
+        if(mode === 'edit' && clientData){
+            setName(clientData.name);
+            setEmail(clientData.email);
+            setJob(clientData.job);
+            setRate(clientData.rate);
+            setStatus(clientData.isactive);
+        }else{
+            setName('');
+            setEmail('');
+            setJob('');
+            setRate('');  
+            setStatus(false);
+        }
+    }, [mode, clientData])
 
     return (
         <>
@@ -14,7 +46,7 @@ export default function ModalForm({ isOpen, onClose, mode, OnSubmit }) {
                     <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={onClose}>X</button>
                     <h3 className="font-bold text-lg py-4">{mode === 'edit' ? 'Edit Client' : 'Client Details'}</h3>
 
-                    <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }}>
+                    <form onSubmit={handleSubmit}>
                         <label className="input input-bordered flex items-center my-4 gap-2">
                             Name
                             <input type="text" className="grow" value={name} onChange={(e) => setName(e.target.value)}/>

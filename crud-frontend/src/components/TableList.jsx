@@ -1,14 +1,50 @@
-export default function TableList({ onOpen}) {
-    {/* make table of sample sata */}
-    const tableData = [
-        { id: 1, name: "Cy Ganderton", email:"helloworld1@gmail.com", job: "Quality Control Specialist", rate: 100, status: true },
-        { id: 2, name: "Hart Hagerty", email:"helloworld1@gmail.com", job: "Desktop Support Technician", rate: 200, status: false },
-        { id: 3, name: "Brice Swyre", email:"helloworld1@gmail.com", job: "Tax Accountant", rate: 150, status: false },
-    ];
+import axios from 'axios';
+import { useState, useEffect } from 'react';
+
+export default function TableList({ handleOpen, searchTerm }) {
+    const [tableData, setTableData] = useState([]);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const response = await axios.get('http://localhost:3000/api/clients');
+                
+                if (response.data && Array.isArray(response.data.rows)) {
+                    setTableData(response.data.rows);  
+                } else {
+                    setTableData([]);  // Fallback in case rows is not an array or doesn't exist
+                }
+            } catch (err) {
+                setError(err.message);
+            }
+        };
+
+        fetchData();
+    }, []);
+
+    const filteredData = tableData.filter(client => 
+        client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        client.job.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const handleDelete = async (id) => {
+        const confirmDelete = window.confirm("Are you sure you want to delete this?");
+        if(confirmDelete){
+            try{
+                await axios.delete(`http://localhost:3000/api/clients/${id}`);
+                setTableData((prevData) => prevData.filter(client => client.id !== id));
+            }catch(err){
+                setError(err.message);
+            }
+        }
+    }
 
     return (
         <>
-        {/* ++mt-10 */}
+        {error && <div className="alert alert-error">{error}</div>}
+
         <div className="overflow-x-auto mt-10">
             <table className="table">
                 {/* head */}
@@ -30,25 +66,25 @@ export default function TableList({ onOpen}) {
                 {/* ++ hover */}
                 <tbody className="hover">
                 {/* row 1 */}
-                    {tableData.map((item) => (
-                        <tr key={item.id} className="hover">
-                            <th>{item.id}</th>
-                            <td>{item.name}</td>
-                            <td>{item.email}</td>
-                            <td>{item.job}</td>
-                            <td>{item.rate}</td>
+                    {filteredData.map((client) => (
+                        <tr key={client.id} className="hover">
+                            <th>{client.id}</th>
+                            <td>{client.name}</td>
+                            <td>{client.email}</td>
+                            <td>{client.job}</td>
+                            <td>{client.rate}</td>
                             {/* ++button logic ++rounded-full w-20  */}
                             <td>
                                 <button
-                                    className={`btn rounded-full w-20 ${item.status ? 'btn-primary' : 'btn-outline btn-primary'}`}>
-                                    {item.status ? 'Active' : 'Inactive'}
+                                    className={`btn rounded-full w-20 ${client.status ? 'btn-primary' : 'btn-outline btn-primary'}`}>
+                                    {client.status ? 'Active' : 'Inactive'}
                                 </button>
                             </td>
                             <td>
-                                <button className="btn btn-secondary " onClick={onOpen}>Update</button>
+                                <button className="btn btn-secondary " onClick={() => handleOpen('edit', client)}>Update</button>
                             </td>
                             <td>
-                                <button className="btn btn-accent">Delete</button>
+                                <button className="btn btn-accent" onClick={() => handleDelete(client.id)}>Delete</button>
                             </td>
                         </tr>
                     ))}
